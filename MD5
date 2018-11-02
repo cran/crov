@@ -1,0 +1,13 @@
+f100b2c493279c101a5dd9927e0a44e4 *DESCRIPTION
+f13649048e4895be7a51570b23199382 *NAMESPACE
+23f9e846f4e2afd3830bc7b8383a6320 *R/createConstraints.R
+b45522933fc055b2f05486a141b99e00 *R/loglikGrad.R
+a8c44ac0fa35a344ab1a39b90e97077e *R/loglikOrdPred.R
+b581a356d040fe641946c410e78e515a *R/mdcp.R
+f39773df5da6ec75b048b9658b820219 *R/monoTestBonf.R
+9869c9d6af2d7d1df4b9815e33546d56 *R/monoTestBonfSingle.R
+adfa226482459ab25983a7b7dce0a918 *R/realDataExample.R
+3897dfc60468ccfee317c40d645748ff *data/realDataExample.rda
+109a818a32682567c76c65de848f8b1f *man/crovData.Rd
+03a07837424aaa0b148166640c9f8a1b *man/mdcp.Rd
+101298c64a60d53cd780d0c3a63b87fb *man/monoTestBonf.Rd
