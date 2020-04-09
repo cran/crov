@@ -1,4 +1,4 @@
-monoTestBonfSingle <- function(simultAlpha=0.10, OP_UMLE, OP_SE){
+monoTestBonfSingle <- function(simultAlpha=0.05, OP_UMLE, OP_SE){
   q_cat <- length(OP_UMLE)
 
   OP_LB <- OP_UMLE - qnorm((1 - (simultAlpha / q_cat) / 2), 0, 1) * OP_SE

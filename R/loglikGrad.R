@@ -1,10 +1,3 @@
-# @title Log-likelihood gradient
-#
-# @description Computes the gradient of the log-likelihood to be used in the optimisation problem.
-# @param paramInit Vector of parameter values for intitialisation.
-# @param matY Matrix with binary values of the ordinal response variable.
-# @param matX Matrix with binary values of the ordinal predictors variables and non-ordinal predictors.
-# @return  Gradient of the Log-likelihood.
 loglikGrad <- function(paramInit,matY,matX) {
   N <- dim(matY)[1]
   c <- dim(matY)[2]

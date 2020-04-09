@@ -2,9 +2,10 @@
 
 export(mdcp)
 export(monoTestBonf)
+export(monoTestConfReg)
 import(VGAM)
 importFrom(gtools,permutations)
 importFrom(stats,constrOptim)
+importFrom(stats,pchisq)
+importFrom(stats,qchisq)
 importFrom(stats,qnorm)
-
-

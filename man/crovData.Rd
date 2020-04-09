@@ -9,6 +9,6 @@
 crovData
 }
 \description{
-Uses an extract of real data.
+Uses real data
 }
 \keyword{datasets}

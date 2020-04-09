@@ -2,9 +2,9 @@
 % Please edit documentation in R/monoTestBonf.R
 \name{monoTestBonf}
 \alias{monoTestBonf}
-\title{Monotonicity test}
+\title{Monotonicity test using Bonferroni correction}
 \usage{
-monoTestBonf(simultAlpha = 0.1, OP_UMLE, OP_SE)
+monoTestBonf(simultAlpha = 0.05, OP_UMLE, OP_SE)
 }
 \arguments{
 \item{simultAlpha}{Numerical value for the simultaneous significance level.}
@@ -22,20 +22,19 @@ in an unconstrained model for ordinal response (see \code{\link[VGAM:vglm]{vlgm}
 
 \code{indivAlphaA}: Numerical value with the individual significance level for each confidence interval.
 
-\code{simultPvalue}: Numerical value with the p-value associated with the simultaneous significance level.
+\code{simultPvalue}: Numerical value with the p-value associated to the simultaneous significance level.
 }
 \description{
-Tests the null hypothesis of monotonicity over a set of parameters associated with an ordinal predictor.
+Tests the null hypothesis of monotonicity over a set of parameters associated to an ordinal predictor.
 }
 \examples{
-# Vectors "OP_UMLE" and "OP_SE" use the values from the uncontrained
-# results for the ordinal predictor "Overcrowd" after executing the command
-# example("mdcp").
 monoTestBonf(simultAlpha=0.05, OP_UMLE = c(0.256116, -0.5058427, 1.5799115),
 OP_SE = c(0.229569, 0.6948236, 0.4059133))
 }
-\seealso{
-\code{\link[crov:mdcp]{mdcp}}, \code{\link[VGAM:vglm]{vlgm}}.
+\references{
+Espinosa, J., Hennig, C. A constrained regression model for an ordinal response
+with ordinal predictors. Stat Comput 29, 869-890 (2019). https://doi.org/10.1007/s11222-018-9842-2.
 }
-\references{Espinosa J., Hennig C. "A constrained regression model for an
-ordinal response with ordinal predictors." arXiv:1804.08715, 2018.}
+\seealso{
+\code{\link[crov:mdcp]{mdcp}}, \code{\link[crov:monoTestConfReg]{monoTestConfReg}}, \code{\link[VGAM:vglm]{vlgm}}.
+}
