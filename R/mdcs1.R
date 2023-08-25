@@ -1,9 +1,20 @@
-mdcs1 <- function(formula, data = NULL, CLS1 = 0.95) {
+mdcs1 <- function(formula, data = NULL, monoDir = NULL, CLS1 = 0.95) {
+
 
   matmf.aux <- model.frame(formula, drop.unused.levels = TRUE, data = data)
 
   if (attr(attr(matmf.aux,"terms"),"dataClasses")[1]!="ordered") stop("No ordinal response, use ordered factors.")
   OP.ID.aux <- which(attr(attr(matmf.aux, "terms"), "dataClasses") == "ordered")[-1]
+
+  if ( !is.null(monoDir) ) {
+    names(monoDir) <- names(OP.ID.aux)
+    monoDirText <- factor(levels = c("Isotonic", "Antitonic", "Estimate"))
+    monoDirText[monoDir==-1] <- "Antitonic"
+    monoDirText[monoDir==0]  <- "Estimate"
+    monoDirText[monoDir==1]  <- "Isotonic"
+    names(monoDirText) <- names(OP.ID.aux)
+  }
+
   if (length(OP.ID.aux) == 0) stop("No ordinal predictors")
   NonOP.Numer.ID.aux <- which(attr(attr(matmf.aux, "terms"), "dataClasses") == "numeric")
   NonOP.Nomin.ID.aux <- which(attr(attr(matmf.aux, "terms"), "dataClasses") == "factor")
@@ -13,7 +24,13 @@ mdcs1 <- function(formula, data = NULL, CLS1 = 0.95) {
   matX.aux <- model.matrix(formula, matmf.aux)[, -1]
   originalLocationX <- colnames(matX.aux)
 
-  matmf <- matmf.aux[, c(1, OP.ID.aux, NonOP.Numer.ID.aux, NonOP.Nomin.ID.aux)]
+  if ( !is.null(monoDir) ) {
+    OP.ID.aux.monoDir <- OP.ID.aux[monoDir!=0]
+    OP.ID.aux.monoDir0 <- OP.ID.aux[monoDir==0]
+    matmf <- matmf.aux[, c(1, OP.ID.aux.monoDir, OP.ID.aux.monoDir0, NonOP.Numer.ID.aux, NonOP.Nomin.ID.aux)]
+  } else {
+    matmf <- matmf.aux[, c(1, OP.ID.aux, NonOP.Numer.ID.aux, NonOP.Nomin.ID.aux)]
+  }
 
   OP.ID.matmf <- 2 : (1 + length(OP.ID.aux))
   names(OP.ID.matmf) <- names(OP.ID.aux)
@@ -94,8 +111,15 @@ mdcs1 <- function(formula, data = NULL, CLS1 = 0.95) {
   id_from_OP <- c(1,(cumsum(unname(q_cat_OrdPred - 1)) + 1)[-length(q_cat_OrdPred)])
   id_to_OP <- cumsum(unname(q_cat_OrdPred - 1))
 
+
   MDC_IndexS1 <- factor(levels = c("Isotonic", "Antitonic", "Both", "None"))
-  for (OP in 1 : length(q_cat_OrdPred)) {
+  if (!is.null(monoDir)) {
+    start <- length(q_cat_OrdPred)-sum(monoDir==0)+1
+  } else {
+    start <- 1
+  }
+
+  for (OP in start : length(q_cat_OrdPred)) {
     OP_UMLE <- matrix(rep(t(param_UMLE_OP[id_from_OP[OP] : id_to_OP[OP]]), 1), byrow = TRUE, nrow = 1, ncol = (q_cat_OrdPred[OP] - 1))
     OP_SE <- matrix(rep(t(se_UMLE_OP[id_from_OP[OP] : id_to_OP[OP]]), 1), byrow = TRUE, nrow = 1, ncol = (q_cat_OrdPred[OP] - 1))
 
@@ -126,6 +150,10 @@ mdcs1 <- function(formula, data = NULL, CLS1 = 0.95) {
         if (sum(directions == 1) == 0 & sum(directions == -1) == 0) {"Both"} else {"None"}}}
   }
 
+  if (!is.null(monoDir)) {
+    MDC_IndexS1[is.na(MDC_IndexS1)] <- monoDirText[monoDir!=0]
+  }
+
   names(MDC_IndexS1) <- names(matmf)[OP.ID.matmf]
 
   namesOPs <- names(MDC_IndexS1)[which(MDC_IndexS1%in%c("Antitonic","Isotonic"))]
@@ -134,7 +162,6 @@ mdcs1 <- function(formula, data = NULL, CLS1 = 0.95) {
 
   if(length(namesOPs)==0) {toBeUnordered <- OP.ID.aux} else {
     toBeUnordered <- OP.ID.aux[-which(names(OP.ID.aux)%in%namesOPs)]}
-
 
   for (i in toBeUnordered) {newData[,i] <- factor(newData[,i],ordered=FALSE)}
 

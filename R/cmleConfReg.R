@@ -1,11 +1,14 @@
-cmleConfReg <- function(formula, data = NULL, signLevelConfReg = 0.95 ) {
+cmleConfReg <- function(formula, data = NULL, monoDir = NULL,
+                        signLevelConfReg = 0.95 ) {
 
-  resMonoTest.aux <- monoTestConfReg(formula=formula, data = data,
+  resMonoTest.aux <- monoTestConfReg(formula=formula, data = data, monoDir = monoDir,
                                      SignifLevel=signLevelConfReg)
 
   namesOPs <-
     row.names(resMonoTest.aux$resConfRegTest)[
       which(resMonoTest.aux$resConfRegTest[,"RejectMonotonicity"]==FALSE)]
+
+  if ( sum(monoDir!=0)>0 ) {namesOPs <- c(names(monoDir[monoDir!=0]),namesOPs)}
 
   newData <- data
 

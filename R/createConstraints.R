@@ -75,20 +75,20 @@ createConstraints<- function(matY, matX, paramInit, q_cat_OrdPred, increasing) {
     if (UpDown[adjustParam] > 0 &
         UpDown[adjustParam] == UpDown[adjustParam - 1] &
         ConstrParamInit[adjustParam] <= ConstrParamInit[adjustParam - 1]) {
-      ConstrParamInit[adjustParam] <- ConstrParamInit[adjustParam - 1] + 1e-5
+      ConstrParamInit[adjustParam] <- ConstrParamInit[adjustParam - 1] + 1e-9
     }
     if (UpDown[adjustParam] > 0 &
         ConstrParamInit[adjustParam] <= 0) {
-      ConstrParamInit[adjustParam] <-  1e-5
+      ConstrParamInit[adjustParam] <-  1e-9
     }
     if (UpDown[adjustParam] < 0 &
         UpDown[adjustParam] == UpDown[adjustParam - 1] &
         ConstrParamInit[adjustParam] >= ConstrParamInit[adjustParam - 1]) {
-      ConstrParamInit[adjustParam] <- ConstrParamInit[adjustParam - 1] - 1e-5
+      ConstrParamInit[adjustParam] <- ConstrParamInit[adjustParam - 1] - 1e-9
     }
     if (UpDown[adjustParam] < 0&
         ConstrParamInit[adjustParam] >= 0) {
-      ConstrParamInit[adjustParam] <-  -1e-5
+      ConstrParamInit[adjustParam] <-  -1e-9
     }
   }
   ConstrParamInit

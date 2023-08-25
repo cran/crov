@@ -14,7 +14,10 @@ mdcp(
   TLNS2 = 0.999,
   StepSizeCLS2 = 1e-04,
   method = NULL,
-  monoTestSignLevel = 0.05
+  monoTestSignLevel = 0.05,
+  reltol = 1e-05,
+  mu = 1e-04,
+  outer.eps = 1e-05
 )
 }
 \arguments{
@@ -25,16 +28,23 @@ For ordinal response and ordinal predictors use ordered factors.}
 variables in \code{formula}. Neither a matrix nor an array will be accepted.}
 
 \item{tryAllMonoDir}{A logical value that indicates whether one model should be fitted for each one of the possible combinations of monotonicity
-directions. Use \code{TRUE} if none monotonicity direction is pre-specified using \code{monoDir} and the MDC procedure is not used.}
+directions of the ordinal predictors' effects. Use \code{TRUE} if no constrained method is used in \code{method}.}
 
 \item{monoDir}{Vector with monotonicity directions for the ordinal predictors to be used as constraints. Possible values for \code{monoDir} are
-\code{TRUE} and \code{FALSE}. Use \code{TRUE} for "isotonic" and \code{FALSE} for "antitonic". The order of the elements in \code{monoDir} must be
-the same as the order of the ordinal predictors in the object \code{formula}, i.e., the j-th element of \code{monoDir} must correspond to
-the monotonicity direction of the j-th ordinal predictor in \code{formula}. If \code{tryAllMonoDir} and \code{monoDir} are not used (default option),
-the monotonicity direction classification prodecure is executed to find the monotonicity directions associated to the model with the maximum log-likelihood.}
+\code{1}, \code{0} and \code{-1}. Use \code{1} for "isotonic" and \code{-1} for "antitonic". If the monotonicity direction of the prameters of an ordinal
+predictor has to be estimated, then use \code{0}, which also allows to drop the monotonicity
+assumption when \code{method} is not "MDCS3".
+The order of the elements in \code{monoDir} must be the same as the order of the ordinal predictors in the object \code{formula}, i.e., the j-th element of \code{monoDir} must correspond to
+the monotonicity direction of the j-th ordinal predictor in \code{formula}. For example,
+\code{monoDir=c(0,-1,-1,1,0)} indicates that the monotonicity direction of the effects of
+the first OP will be estimated; the monotonicity direction of the effects of the second and third OPs are antitonic;
+the monotonicity direction of the effects of the fourth OP isotonic; and the monotonicity direction
+of the effects of the fifth OP will also be estimated. If \code{tryAllMonoDir} and \code{monoDir} are not used (default option),
+the monotonicity direction classification prodecure is executed on all of the ordinal predictors to find the monotonicity directions associated to the
+model with the maximum log-likelihood.}
 
 \item{CLS1}{Numerical value for the confidence level to be used in the first step of the MDC procedure. This parameter is active if
-\code{tryAllMonoDir} and \code{monoDir} are not used.}
+\code{tryAllMonoDir} is not used.}
 
 \item{TLBS2}{Numerical value for the tolerance level to be used in the second step of the MDC procedure over those ordinal
 predictors classified as "Both" in the first step. This parameter is active if \code{tryAllMonoDir} and \code{monoDir} are not used.}
@@ -45,9 +55,28 @@ predictors classified as "None" in the first step. This parameter is active if \
 \item{StepSizeCLS2}{Numerical value for the magnitude in which the confidence levels will be increased or decreased during the second step of
 the MDC procedure. This parameter is active if \code{tryAllMonoDir} and \code{monoDir} are not used.}
 
-\item{method}{The type of constrained method to be used among "MDCS1", "MDCS2", "MDCS3", "CMLEbonferroni", "CMLEconfReg", and "CMLEfiltered". Default value corresponds to "MDCS3".}
+\item{method}{The type of constrained method to be used among \code{"MDCS1"}, \code{"MDCS2"}, \code{"MDCS3"},
+\code{"CMLEbonferroni"}, \code{"CMLEconfReg"}, and \code{"CMLEfiltered"}. Default value is \code{"MDCS3"}.
+\code{"MDCS1"} uses the first step of the MDC procedure described in Espinosa, J. and Christian H. (2019)
+to drop the monotonicity constraints on those ordinal predictors (OPs) classified as "both" or "none".
+\code{"MDCS2"} uses the second step of the MDC procedure described in Espinosa, J. and Christian H. (2019)
+to drop the monotonicity constraints on those OPs classified as "both" or "none".
+\code{"MDCS3"} performs the three steps of the MDC procedure described in Espinosa, J. and Christian H. (2019)
+and does not drop monotonicity constraints on the OPs, being the most restrictive method.
+\code{"CMLEbonferroni"} tests the null hypothesis of monotonic effects for an OP as described in Espinosa, J. and Christian H. (2019)
+and drops the monotonicity constraints on those OPs for which the monotonicity test rejects the null hypothesis.
+\code{"CMLEconfReg"} tests the null hypothesis of monotonic effects for an OP based on the analysis of confidence regions
+and drops the monotonicity constraints on those OPs for which the monotonicity test rejects the null hypothesis.
+\code{"CMLEfiltered"} uses the first step of the MDC procedure described in Espinosa, J. and Christian H. (2019)
+to drop the monotonicity constraints on those ordinal predictors (OPs) classified as "none".}
 
-\item{monoTestSignLevel}{Significance level used when method is "CMLEbonferroni" or "CMLEconfReg". Default value 0.05.}
+\item{monoTestSignLevel}{Significance level used when \code{method} is \code{"CMLEbonferroni"} or \code{"CMLEconfReg"}. Default value 0.05.}
+
+\item{reltol}{Passed to \code{constrOptim()}.}
+
+\item{mu}{Passed to \code{constrOptim()}.}
+
+\item{outer.eps}{Passed to \code{constrOptim()}.}
 }
 \value{
 \code{MDCproc}: Data frame with the monotonicity direction classification (Isotonic, Antitonic, Both, or None) used for each
@@ -55,8 +84,6 @@ ordinal predictor in each one of the steps of the MDC procedure (S1, S2 and S3),
 \code{monoDir} is used, \code{MDCproc} shows the monotonicity directions in \code{monoDir}.
 
 \code{estimates}: Vector of parameter estimates of the model.
-
-\code{estimates_se}: Vector of standard errors of the parameter estimates of the model.
 
 \code{log.lik}: Value of the log-likelihood of the model.
 
@@ -70,30 +97,36 @@ combinations of monotonicity directions.
 \code{UMLE}: Vector with the parameter estimates of the unconstrained version of the model.
 
 \code{UMLE_SE}: Vector with the standard errors of the unconstrained version of the model.
+
+\code{q_cat_OrdPred}: Vector with the number of ordinal categories for each ordinal predictor. Values are displayed in the same order as the ordinal predictors are incorporated in \code{formula}.
 }
 \description{
 Fits a constrained regression model for an ordinal response with ordinal predictors
-and possibly others, Espinosa and Hennig (2019) <https://doi.org/10.1007/s11222-018-9842-2>. The parameter estimates associated with an ordinal
+and possibly others, Espinosa and Hennig (2019) <DOI:10.1007/s11222-018-9842-2>. The parameter estimates associated with an ordinal
 predictor are constrained to be monotonic. If a monotonicity direction (isotonic or antitonic) is
-not specified for an ordinal predictor by the user, then the monotonicity direction classification
-procedure establishes it.
+not specified for an ordinal predictor (OP) by the user, then a constrained method to be indicated in the option \code{method} establishes it or the
+approach that tries all possible combinations of monotonicity directions an the chooses the one with maximum likelihood.
 }
 \examples{
-# Ordinal predictors: EduLevel, IncQuint, Health,
-# Overcrowd, and NumChildren
-# mdcpExample <- mdcp(QoL ~ EduLevel + Age + IncQuint + Gender + Health +
-# Overcrowd + Activity + NumChildren, data = crovData,
-# CLS1 = 0.95, TLBS2 = 0.90, TLNS2 = 0.99, StepSizeCLS2 = 0.0002)
-# mdcpExample$MDCproc
-# cbind("CMLE"=mdcpExample$estimates,"UMLE"=mdcpExample$UMLE)
-# mdcpExample$UMLE_SE
-# mdcpExample$log.lik
-# mdcpExample$allModels[1:6]
+# Ordinal predictors: EduLevel, IncQuint and Health,
+mdcpExample <- mdcp(QoL ~ EduLevel + Age + IncQuint + Gender + Health, data = crovData,
+CLS1 = 0.95, TLBS2 = 0.90, TLNS2 = 0.99, StepSizeCLS2 = 0.0002)
+mdcpExample$MDCproc
+cbind("CMLE"=mdcpExample$estimates,"UMLE"=mdcpExample$UMLE)
+mdcpExample$UMLE_SE
+mdcpExample$log.lik
+mdcpExample$allModels[1:6]
 }
 \references{
-Espinosa, J., Hennig, C. A constrained regression model for an ordinal response
-with ordinal predictors. Stat Comput 29, 869-890 (2019). https://doi.org/10.1007/s11222-018-9842-2.
+Espinosa, J., and Hennig, C. "A constrained regression model for an ordinal response
+with ordinal predictors." Statistics and Computing 29.5 (2019): 869-890.
+https://doi.org/10.1007/s11222-018-9842-2.
 }
 \seealso{
-\code{\link[crov:monoTestBonf]{monoTestBonf}}, \code{\link[crov:monoTestConfReg]{monoTestConfReg}}, \code{\link[stats:constrOptim]{constrOptim}}.
+\code{\link[crov:monoTestBonf]{monoTestBonf}},
+\code{\link[crov:monoTestConfReg]{monoTestConfReg}},
+\code{\link[crov:confRegUCRandUCCR]{confRegUCRandUCCR}},
+\code{\link[crov:confRegCCR]{confRegCCR}},
+\code{\link[crov:plotCMLE]{plotCMLE}},
+\code{\link[stats:constrOptim]{constrOptim}}.
 }

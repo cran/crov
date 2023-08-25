@@ -4,7 +4,9 @@
 \name{crovData}
 \alias{crovData}
 \title{Real data example}
-\format{Data frame with 9 variables}
+\format{
+Data frame with 9 variables
+}
 \usage{
 crovData
 }

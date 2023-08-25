@@ -1,10 +1,20 @@
-mdcs2 <- function(formula, data = NULL, CLS1 = 0.95,
+mdcs2 <- function(formula, data = NULL, monoDir = NULL, CLS1 = 0.95,
                   TLBS2 = 0.85, TLNS2 = 0.999, StepSizeCLS2 = 0.0001) {
 
   matmf.aux <- model.frame(formula, drop.unused.levels = TRUE, data = data)
 
   if (attr(attr(matmf.aux,"terms"),"dataClasses")[1]!="ordered") stop("No ordinal response, use ordered factors.")
   OP.ID.aux <- which(attr(attr(matmf.aux, "terms"), "dataClasses") == "ordered")[-1]
+
+  if ( !is.null(monoDir) ) {
+    names(monoDir) <- names(OP.ID.aux)
+    monoDirText <- factor(levels = c("Isotonic", "Antitonic", "Estimate"))
+    monoDirText[monoDir==-1] <- "Antitonic"
+    monoDirText[monoDir==0]  <- "Estimate"
+    monoDirText[monoDir==1]  <- "Isotonic"
+    names(monoDirText) <- names(OP.ID.aux)
+  }
+
   if (length(OP.ID.aux) == 0) stop("No ordinal predictors")
   NonOP.Numer.ID.aux <- which(attr(attr(matmf.aux, "terms"), "dataClasses") == "numeric")
   NonOP.Nomin.ID.aux <- which(attr(attr(matmf.aux, "terms"), "dataClasses") == "factor")
@@ -14,7 +24,13 @@ mdcs2 <- function(formula, data = NULL, CLS1 = 0.95,
   matX.aux <- model.matrix(formula, matmf.aux)[, -1]
   originalLocationX <- colnames(matX.aux)
 
-  matmf <- matmf.aux[, c(1, OP.ID.aux, NonOP.Numer.ID.aux, NonOP.Nomin.ID.aux)]
+  if ( !is.null(monoDir) ) {
+    OP.ID.aux.monoDir <- OP.ID.aux[monoDir!=0]
+    OP.ID.aux.monoDir0 <- OP.ID.aux[monoDir==0]
+    matmf <- matmf.aux[, c(1, OP.ID.aux.monoDir, OP.ID.aux.monoDir0, NonOP.Numer.ID.aux, NonOP.Nomin.ID.aux)]
+  } else {
+    matmf <- matmf.aux[, c(1, OP.ID.aux, NonOP.Numer.ID.aux, NonOP.Nomin.ID.aux)]
+  }
 
   OP.ID.matmf <- 2 : (1 + length(OP.ID.aux))
   names(OP.ID.matmf) <- names(OP.ID.aux)
@@ -95,8 +111,15 @@ mdcs2 <- function(formula, data = NULL, CLS1 = 0.95,
   id_from_OP <- c(1,(cumsum(unname(q_cat_OrdPred - 1)) + 1)[-length(q_cat_OrdPred)])
   id_to_OP <- cumsum(unname(q_cat_OrdPred - 1))
 
+
   MDC_IndexS1 <- factor(levels = c("Isotonic", "Antitonic", "Both", "None"))
-  for (OP in 1 : length(q_cat_OrdPred)) {
+  if (!is.null(monoDir)) {
+    start <- length(q_cat_OrdPred)-sum(monoDir==0)+1
+  } else {
+    start <- 1
+  }
+
+  for (OP in start : length(q_cat_OrdPred)) {
     OP_UMLE <- matrix(rep(t(param_UMLE_OP[id_from_OP[OP] : id_to_OP[OP]]), 1), byrow = TRUE, nrow = 1, ncol = (q_cat_OrdPred[OP] - 1))
     OP_SE <- matrix(rep(t(se_UMLE_OP[id_from_OP[OP] : id_to_OP[OP]]), 1), byrow = TRUE, nrow = 1, ncol = (q_cat_OrdPred[OP] - 1))
 
@@ -106,13 +129,17 @@ mdcs2 <- function(formula, data = NULL, CLS1 = 0.95,
     OP_LB_1Lag <- c(0, OP_LB[-(q_cat_OrdPred[OP] - 1)])
     OP_UB_1Lag <- c(0, OP_UB[-(q_cat_OrdPred[OP] - 1)])
 
-    OP_Labels_One_Mat <- (matrix(rep(OP_LB, q_cat_OrdPred[OP] - 1), nrow = q_cat_OrdPred[OP] - 1) >=
-                            matrix(rep(OP_UB_1Lag, q_cat_OrdPred[OP] - 1), nrow = q_cat_OrdPred[OP] - 1, byrow = TRUE)) * 1
+    OP_Labels_One_Mat <- (matrix(rep(OP_LB, q_cat_OrdPred[OP] - 1),
+                                 nrow = q_cat_OrdPred[OP] - 1) >=
+                            matrix(rep(OP_UB_1Lag, q_cat_OrdPred[OP] - 1),
+                                   nrow = q_cat_OrdPred[OP] - 1, byrow = TRUE)) * 1
     OP_Labels_One_Mat[upper.tri(OP_Labels_One_Mat,diag = FALSE)] <- 0
     rownames(OP_Labels_One_Mat) <- 2 : q_cat_OrdPred[OP]
 
-    OP_Labels_MinusOne_Mat <- (matrix(rep(OP_UB, q_cat_OrdPred[OP] - 1), nrow = q_cat_OrdPred[OP] - 1) <=
-                                 matrix(rep(OP_LB_1Lag, q_cat_OrdPred[OP] - 1), nrow = q_cat_OrdPred[OP] - 1, byrow = TRUE)) * -1
+    OP_Labels_MinusOne_Mat <- (matrix(rep(OP_UB, q_cat_OrdPred[OP] - 1),
+                                      nrow = q_cat_OrdPred[OP] - 1) <=
+                                 matrix(rep(OP_LB_1Lag, q_cat_OrdPred[OP] - 1),
+                                        nrow = q_cat_OrdPred[OP] - 1, byrow = TRUE)) * -1
     OP_Labels_MinusOne_Mat[upper.tri(OP_Labels_MinusOne_Mat, diag = FALSE)] <- 0
     rownames(OP_Labels_MinusOne_Mat) <- 2 : q_cat_OrdPred[OP]
 
@@ -198,9 +225,13 @@ mdcs2 <- function(formula, data = NULL, CLS1 = 0.95,
   }
 
   MDC_IndexS2 <- MDC$MDC_S2
-  names(MDC_IndexS2) <- names(OP.ID.aux)
+  names(MDC_IndexS2) <- rownames(MDC)
 
-  namesOPs <- names(OP.ID.aux)[which(MDC_IndexS2%in%c("Antitonic","Isotonic"))]
+  if (!is.null(monoDir)) {
+    MDC_IndexS2[is.na(MDC_IndexS2)] <- monoDirText[monoDir!=0]
+  }
+
+  namesOPs <- names(MDC_IndexS2)[which(MDC_IndexS2%in%c("Antitonic","Isotonic"))]
 
   newData <- data
 

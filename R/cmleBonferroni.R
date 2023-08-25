@@ -1,20 +1,36 @@
-cmleBonferroni <- function(formula, data = NULL, signLevelBonferroni = 0.95 ) {
+cmleBonferroni <- function(formula, data = NULL, monoDir = NULL,
+                           signLevelBonferroni = 0.95 ) {
 
   matmf.aux <- model.frame(formula, drop.unused.levels = TRUE, data = data)
 
   if (attr(attr(matmf.aux,"terms"),"dataClasses")[1]!="ordered") stop("No ordinal response, use ordered factors.")
   OP.ID.aux <- which(attr(attr(matmf.aux, "terms"), "dataClasses") == "ordered")[-1]
+
+  if ( !is.null(monoDir) ) {
+    names(monoDir) <- names(OP.ID.aux)
+    monoDirText <- factor(levels = c("Isotonic", "Antitonic", "Estimate"))
+    monoDirText[monoDir==-1] <- "Antitonic"
+    monoDirText[monoDir==0]  <- "Estimate"
+    monoDirText[monoDir==1]  <- "Isotonic"
+    names(monoDirText) <- names(OP.ID.aux)
+  }
+
   if (length(OP.ID.aux) == 0) stop("No ordinal predictors")
   NonOP.Numer.ID.aux <- which(attr(attr(matmf.aux, "terms"), "dataClasses") == "numeric")
   NonOP.Nomin.ID.aux <- which(attr(attr(matmf.aux, "terms"), "dataClasses") == "factor")
-
 
   for(col in c(1, OP.ID.aux)) {matmf.aux[, col] <- factor(matmf.aux[, col], ordered = FALSE)}
 
   matX.aux <- model.matrix(formula, matmf.aux)[, -1]
   originalLocationX <- colnames(matX.aux)
 
-  matmf <- matmf.aux[, c(1, OP.ID.aux, NonOP.Numer.ID.aux, NonOP.Nomin.ID.aux)]
+  if ( !is.null(monoDir) ) {
+    OP.ID.aux.monoDir <- OP.ID.aux[monoDir!=0]
+    OP.ID.aux.monoDir0 <- OP.ID.aux[monoDir==0]
+    matmf <- matmf.aux[, c(1, OP.ID.aux.monoDir, OP.ID.aux.monoDir0, NonOP.Numer.ID.aux, NonOP.Nomin.ID.aux)]
+  } else {
+    matmf <- matmf.aux[, c(1, OP.ID.aux, NonOP.Numer.ID.aux, NonOP.Nomin.ID.aux)]
+  }
 
   OP.ID.matmf <- 2 : (1 + length(OP.ID.aux))
   names(OP.ID.matmf) <- names(OP.ID.aux)
@@ -82,7 +98,7 @@ cmleBonferroni <- function(formula, data = NULL, signLevelBonferroni = 0.95 ) {
   matY <- model.matrix( ~ as.factor(matmf[,1]) - 1)
 
   q_cat_OrdPred <- apply(as.matrix(matmf[, OP.ID.matmf]), 2, function(x) length(unique(x)))
-
+# colnames(matmf)
   vglm.result <- vglm(OrdResp~. , family = cumulative(parallel = TRUE), data = matmf[, -1])
   param_Names <- names(coefficients(vglm.result))
   param_UMLE <- unname(coefficients(vglm.result))
@@ -102,7 +118,13 @@ cmleBonferroni <- function(formula, data = NULL, signLevelBonferroni = 0.95 ) {
                                 "simultPvalue"=rep(as.double(NA),length(OP_ID_to)),
                                 "RejectMonotonicity"=rep(as.logical(NA),length(OP_ID_to)),
                                 "testRes"=NA)
-  for (i in 1:length(q_cat_OrdPred)) {
+  if (!is.null(monoDir)) {
+    start <- length(q_cat_OrdPred)-sum(monoDir==0)+1
+  } else {
+    start <- 1
+  }
+
+  for (i in start : length(q_cat_OrdPred)) {
     resMonoTest.single <- monoTestBonf(simultAlpha = signLevelBonferroni,
                                        OP_UMLE=param_UMLE_OP[OP_ID_from[i]:OP_ID_to[i]],
                                        OP_SE=se_UMLE_OP[OP_ID_from[i]:OP_ID_to[i]])
@@ -121,12 +143,13 @@ cmleBonferroni <- function(formula, data = NULL, signLevelBonferroni = 0.95 ) {
   namesOPs <-
     resMonoTest.aux[which(resMonoTest.aux[,"RejectMonotonicity"]==FALSE),"OPname"]
 
+  if ( sum(monoDir!=0)>0 ) {namesOPs <- c(names(monoDir[monoDir!=0]),namesOPs)}
+
   newData <- data
 
   if(length(namesOPs)==0) {toBeUnordered <- OP.ID.aux} else {
     toBeUnordered <- resMonoTest.aux[which(resMonoTest.aux[,"RejectMonotonicity"]==TRUE),"OPname"]
   }
-
 
   for (i in toBeUnordered) {newData[,i] <- factor(newData[,i],ordered=FALSE)}
 

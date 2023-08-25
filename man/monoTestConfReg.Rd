@@ -4,7 +4,7 @@
 \alias{monoTestConfReg}
 \title{Monotonicity test using confidence regions}
 \usage{
-monoTestConfReg(formula, data = NULL, SignifLevel = 0.05)
+monoTestConfReg(formula, data = NULL, monoDir = NULL, SignifLevel = 0.05)
 }
 \arguments{
 \item{formula}{A \code{formula} to be fitted with ordinal response, one or more ordinal predictors, and possibly one or more other predictors.
@@ -12,6 +12,13 @@ For ordinal response and ordinal predictors use ordered factors.}
 
 \item{data}{A data.frame, list or environment (or object coercible by \code{\link{as.data.frame}} to a data.frame), containing the
 variables in \code{formula}. Neither a matrix nor an array will be accepted.}
+
+\item{monoDir}{Vector with monotonicity directions for the ordinal predictors to be used as constraints. Possible values for \code{monoDir} are
+\code{1}, \code{0} and \code{-1}. Use \code{1} for "isotonic", \code{-1} for "antitonic", and \code{0} o test monotonicity of the prameters of an ordinal
+predictor. The order of the elements in \code{monoDir} must be the same as the order of the ordinal
+predictors in the object \code{formula}, i.e., the j-th element of \code{monoDir} must correspond to
+the monotonicity direction of the j-th ordinal predictor in \code{formula}. If \code{monoDir} is not used (default option),
+the monotonicity of all ordinal predictors' effects are tested.}
 
 \item{SignifLevel}{Numerical value for the significance level.}
 }
@@ -29,15 +36,19 @@ variables in \code{formula}. Neither a matrix nor an array will be accepted.}
 \code{RejectMonotonicity}=TRUE if the null hypothesis of monotonicity is rejected, FALSE otherwise.
 }
 \description{
-Tests the null hypothesis of monotonicity over a set of parameters associated to an ordinal predictor.
+Tests the null hypothesis of monotonicity over a set of parameters associated to an ordinal predictor. The log-likelihood ratio test is used after imposing ordinal constraints on the parameter estimates of a single ordinal predictor and comparing its results against the unconstrained MLEs.
 }
 \examples{
-# Ordinal predictors: EduLevel, IncQuint, Health,
-  # Overcrowd, and NumChildren
-  # monoTestConfRegExample <- monoTestConfReg(QoL ~ EduLevel + Age + IncQuint + Gender +
-  # Health + Overcrowd + Activity + NumChildren, data = crovData, SignifLevel = 0.05)
-  # monoTestConfRegExample$resConfRegTest
+# Ordinal predictors: EduLevel, IncQuint and Health
+  monoTestConfRegExample <- monoTestConfReg(QoL ~ EduLevel + Age + IncQuint + Gender +
+  Health, data = crovData, monoDir=c(0,-1,-1), SignifLevel = 0.05)
+  monoTestConfRegExample$resConfRegTest
 }
 \seealso{
-\code{\link[crov:mdcp]{mdcp}}, \code{\link[crov:monoTestBonf]{monoTestBonf}}, \code{\link[VGAM:vglm]{vlgm}}.
+\code{\link[crov:mdcp]{mdcp}},
+\code{\link[crov:monoTestBonf]{monoTestBonf}},
+\code{\link[crov:confRegUCRandUCCR]{confRegUCRandUCCR}},
+\code{\link[crov:confRegCCR]{confRegCCR}},
+\code{\link[crov:plotCMLE]{plotCMLE}},
+\code{\link[VGAM:vglm]{vlgm}}.
 }

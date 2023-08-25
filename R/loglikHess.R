@@ -1,3 +1,10 @@
+# @title Log-likelihood Hessian matrix
+#
+# @description Computes the Hessian matrix of the log-likelihood to calculate the SE once the parameter estimates are obtained.
+# @param paramInit Vector of parameter values for intitialisation.
+# @param matY Matrix with binary values of the ordinal response variable.
+# @param matX Matrix with binary values of the ordinal predictors variables and non-ordinal predictors.
+# @return  Hessian matrix of the Log-likelihood.
 loglikHess<- function(paramInit,matY,matX) {
   N<-dim(matY)[1]
   c<-dim(matY)[2]
